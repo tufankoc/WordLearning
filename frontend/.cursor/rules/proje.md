@@ -1,0 +1,106 @@
+# Proje Talimatları: Kelime Öğrenme & Aralıklı Tekrar Sistemi
+
+## 1. Genel Bakış
+Bu proje, kullanıcının gönderdiği metinlerden kelimeleri ayırarak, kelime sıklığı (volarite) analizine dayalı, Anki benzeri aralıklı tekrar sistemini uygulamayı amaçlar. Sistemde, her kelime öğrenme durumuna göre 4 aşamada takip edilecek; tam öğrenilen kelimeler (yeşil) tekrar sıklığı düşürülürken, az öğrenilen (sarı) ve öğrenilmesi gereken (kırmızı) kelimeler öncelikli olarak çalıştırılacaktır. Hiç çalışılmamış kelimeler ise beyaz ya da normal renkte görüntülenecektir.
+
+## 2. Teknik Gereksinimler
+- **Backend**: Django, Django Rest Framework (API geliştirme için)
+- **Frontend**: Modern, responsive tasarım (Bootstrap, Tailwind CSS veya React tabanlı tercih edilebilir)
+- **Veritabanı**: PostgreSQL veya SQLite (geliştirme aşamasında)
+- **Mobil Uygulama**: Gelecekte API entegrasyonu ile React Native veya Flutter kullanılabilir.
+- **Kod Standartları**: Standart yapılar kullanılacak, karmaşık sistemlerden kaçınılacaktır.
+
+## 3. Sistem Mimarisi
+### 3.1 Kullanıcı İş Akışı
+- **Metin Girişi**: Kullanıcı, üzerinde çalışılacak metni sisteme yükler.
+- **Kelime Ayrıştırma**: Metin, NLP kütüphaneleri (örn. NLTK, spaCy) kullanılarak kelimelere ayrılır.
+- **Kelime Sıklığı (Volarite) Hesaplama**: Metin içerisindeki her kelimenin geçiş sıklığı hesaplanır.
+- **Öğrenme Durumunun Takibi**: Her kelime, 4 aşamalı bir öğrenme seviyesine (0: hiç çalışılmadı, 1: bilinemedi, 2: az biliniyor, 3: tam öğrenildi) göre sınıflandırılır.
+- **Aralıklı Tekrar Algoritması**: 
+  - Günlük tekrar listesi, %90 en çok geçen, %10 ise en az geçen kelimelerden oluşur.
+  - Kullanıcı cevaplarına göre, kelime tekrar tarihleri 1, 2, 5 ve 7 gün sonrası olarak belirlenir.
+  - Kullanıcı, kelimeyi “bildi” olarak işaretlemeden önce, öğrenme durumunun doğruluğundan emin olmalıdır.
+
+### 3.2 Metin Sayfası ve Renk Kodlaması
+- **Renkler**:
+  - **Yeşil**: Tam öğrenilmiş (status = 3)
+  - **Sarı**: Az öğrenilmiş (status = 2)
+  - **Kırmızı**: Öğrenme aşamasında / bilinemeyen (status = 1)
+  - **Beyaz/Normal**: Hiç çalışılmamış (status = 0)
+- **Öğrenme Oranı Hesaplama**:
+  - Metindeki tüm kelimeler içerisinde tam öğrenilmiş (yeşil) kelimelerin oranı hesaplanır.
+  - Örnek hesaplama:  
+    \[
+    \text{Öğrenme Oranı} = \frac{\text{Tam Öğrenilmiş Kelime Sayısı}}{\text{Toplam Kelime Sayısı}} \times 100
+    \]
+  - Sonuç, "Metni %40 oranında biliyorsun" şeklinde kullanıcıya sunulur.
+
+## 4. Veritabanı Modeli
+### 4.1 Word Modeli (models.py)
+```python
+from django.db import models
+from django.contrib.auth.models import User
+
+class Word(models.Model):
+    STATUS_CHOICES = (
+        (0, 'Hiç Çalışılmadı'),
+        (1, 'Bilinemedi'),
+        (2, 'Az Biliniyor'),
+        (3, 'Tam Öğrenildi'),
+    )
+    
+    text = models.CharField(max_length=100)
+    frequency = models.IntegerField(default=0)
+    status = models.IntegerField(choices=STATUS_CHOICES, default=0)
+    last_review = models.DateField(null=True, blank=True)
+    next_review = models.DateField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+4.2 ReviewLog Modeli (isteğe bağlı, kelime tekrar geçmişini tutmak için)
+python
+Kopyala
+Düzenle
+class ReviewLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    word = models.ForeignKey(Word, on_delete=models.CASCADE)
+    review_date = models.DateField(auto_now_add=True)
+    result = models.BooleanField()  # doğru/yanlış gibi
+5. API Tasarımı (Django Rest Framework)
+Endpoint Örnekleri:
+/api/words/: Kelime ekleme, güncelleme, listeleme işlemleri.
+/api/reviews/: Günlük tekrar listesinin çekilmesi, kullanıcı cevaplarının gönderilmesi.
+/api/text/: Kullanıcının gönderdiği metnin işlenmesi ve kelime analizi yapılması.
+Güvenlik: JWT veya Django’nun oturum yönetimi kullanılacaktır.
+Dokümantasyon: Swagger/Redoc ile API dokümantasyonu sağlanabilir.
+6. Kullanıcı Arayüzü (Frontend)
+6.1 Responsive Tasarım
+CSS Framework: Bootstrap, Tailwind CSS veya benzeri modern frameworkler kullanılabilir.
+Renk Kodlaması: Kelimeler, öğrenme durumlarına göre aşağıdaki şekilde renklendirilecektir.
+7. Aralıklı Tekrar Algoritması
+Kelime Sıralaması: İlk olarak, kullanıcının gönderdiği metindeki kelimeler, frekanslarına (volarite) göre sıralanır.
+Günlük Tekrar Listesi:
+%90 oranında en sık geçen kelimeler,
+%10 oranında nadir geçen kelimelerden oluşacaktır.
+Tekrar Planlaması: Kullanıcının yanıtlarına göre, kelimenin tekrar tarihleri 1 gün, 2 gün, 5 gün ve 7 gün sonrası olarak ayarlanır.
+Öğrenme Durumu Güncellemesi: Kullanıcı kelimeyi “bildi” demedikçe, kelime seviyesi ilerlemeyecektir.
+8. Mobil Uygulama ve API Entegrasyonu
+API Tabanlı Yaklaşım: Geliştirilen REST API, mobil uygulama (React Native/Flutter) tarafından tüketilecektir.
+Veri Senkronizasyonu: Mobil uygulama, kullanıcının çalışma geçmişini, tekrar listelerini ve öğrenme durumunu API üzerinden güncel tutacaktır.
+9. Geliştirme Süreci ve Dokümantasyon (done.md)
+Tüm geliştirme adımları, aşağıdaki gibi adım adım done.md dosyasında belgelenmelidir:
+
+ Django projesinin oluşturulması ve temel yapılandırmaların tamamlanması.
+ Metin işleme modülünün geliştirilmesi:
+Metinlerin kelime ayrıştırması ve frekans analizlerinin yapılması.
+ Veritabanı modellerinin (Word, ReviewLog) tasarlanması ve uygulanması.
+ Aralıklı tekrar algoritmasının temel mantığının entegre edilmesi.
+ REST API endpoint'lerinin geliştirilmesi ve güvenlik yapılandırmalarının yapılması.
+ Responsive kullanıcı arayüzünün tasarlanması ve entegre edilmesi.
+ API dokümantasyonu ve done.md dosyasının düzenli olarak güncellenmesi.
+ Test süreçleri ve hata ayıklama aşamalarının tamamlanması.
+10. Ek Notlar ve İlerleme
+Projenin her aşamasında, kullanıcıya bilimsel ve mantıklı rehberlik sağlanarak, sistematik ilerleme desteklenecektir.
+Her modülde, sistemin kullanılabilirliği ve kullanıcı deneyimi ön planda tutulacaktır.
+Gerektiğinde, farklı perspektiflerden değerlendirmeler ve ek geliştirme önerileri yapılabilir.
