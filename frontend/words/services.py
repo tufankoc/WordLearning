@@ -1,3 +1,0 @@
-"""
-Boş servis dosyası
-""" 
