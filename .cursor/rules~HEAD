@@ -1,0 +1,52 @@
+# Kelime – Repository Rules (for Cursor)
+
+## Amaç
+- Açık kaynak, Django 4.2 tabanlı bir kelime öğrenme uygulaması.
+- Güvenlik, şeffaflık ve sürdürülebilirlik önceliklidir.
+
+## Güvenlik ve Gizli Bilgiler
+- Gerçek anahtarlar, token’lar, çerezler kesinlikle commit edilmez.
+- `.env` dosyası commit edilmez; `.gitignore` bu dosyayı zaten hariç tutar.
+- Örnek ortam değişkenleri için `ENV.sample` kullanılır.
+- `kelime/settings.py` sadece ortam değişkenlerinden beslenir; sabit gizli değer yoktur.
+
+## Bağımlılıklar
+- Gereksiz kütüphane eklemeyin. Önce standart kütüphane ve mevcut bağımlılıkları değerlendirin.
+- Yeni kütüphane gerekiyorsa: net gerekçe, kullanım kapsamı, lisans uyumu belirtin.
+- `requirements.txt` sürüm sabitlemesi korunur.
+
+## Django Kuralları
+- `settings.py` içinde üretim davranışları env ile kontrol edilir (`DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, CORS/CSRF, throttle).
+- Statik dosyalar: `static/` geliştirme, `STATIC_ROOT=staticfiles/` üretim.
+- Veritabanı: varsayılan `sqlite3` geliştirmede; üretimde harici DB için env temelli yapılandırma yapılabilir (eklenirse README güncellenmelidir).
+- Admin güvenlik middleware’leri devre dışı bırakılmamalı; değişiklik yapılıyorsa gerekçesi PR’da açıklanmalı.
+
+## Kod Stili
+- Python 3.12+. Açık ve okunabilir kod yazın.
+- Anlamlı isimlendirme; 1-2 karakterli isimler kullanmayın.
+- Erken dönüşler ve kenar durumları önce.
+- Yorumlar gerekli yerde, kısa ve “neden” odaklı.
+- Tip ipuçları makul ölçüde teşvik edilir; kamu API’lerinde açık imzalar.
+
+## Test ve CI
+- GitHub Actions workflow: `.github/workflows/ci.yml` çalışır durumda kalmalı.
+- `manage.py check`, `migrate --noinput`, `test --noinput` adımları kırmızı olmamalı.
+- Ağ bağımlı testler (harici API) flaky ise mock/skip ile stabilize edilir.
+
+## Git ve PR
+- Ana dal: `main`.
+- Küçük, odaklı PR’lar yazın. PR açıklamasında amaç, kapsam, etki, güvenlik notları.
+- Değişiklikler için README/ENV.sample güncellemesi gerekiyorsa PR’a dahil edin.
+
+## Betikler
+- `test_*.sh` betikleri token’ları ortamdan okur: `TOKEN`, `PRO_TOKEN`, `FREE_TOKEN`.
+- Dokümantasyon örneklerinde “YOUR_*_TOKEN” placeholderları kullanılmalıdır.
+
+## Lisans
+- MIT. Üçüncü taraf lisanslara saygı gösterin, kopyalanan kodda lisans başlıkları korunsun.
+
+## İletişim (Cursor Yardımcısı için)
+- Kısa, yüksek sinyalli yanıt yazın; gerekirse maddeler halinde.
+- Dosya, klasör, fonksiyon adlarını backtick ile biçimlendirin.
+- Kod ekliyorsanız yalnızca ilgili kısımları gösterin; açıklamayı metinde yapın.
+- Büyük düzenlemeler sonrası test/build çalıştırmayı hatırlatın.

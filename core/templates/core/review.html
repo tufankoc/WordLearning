@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}Review - Kelime{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Review Your Words</h1>
+    
+    <!-- Progress indicator -->
+    <div class="mb-6 bg-white rounded-lg shadow-sm p-4">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-sm text-gray-600">Today's Progress</span>
+            <span class="text-sm font-medium">{{ words_learned_today }} / {{ daily_target }} new words</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-blue-600 h-2 rounded-full" style="width: {% widthratio words_learned_today daily_target 100 %}%"></div>
+        </div>
+        <div class="mt-2 text-sm text-gray-500">
+            {{ review_words_count }} review words + {{ new_words_count }} new words available
+        </div>
+    </div>
+
+    <!-- Main flashcard area -->
+    <div id="flashcard-container" class="max-w-2xl mx-auto">
+        <div id="loading-card" class="bg-white rounded-lg shadow-md p-8 text-center">
+            <p class="text-gray-500">Loading...</p>
+        </div>
+        
+        <div id="no-words-card" class="bg-white rounded-lg shadow-md p-8 text-center hidden">
+            <h2 class="text-2xl font-semibold mb-4">No words to review!</h2>
+            <p class="text-gray-600 mb-4">You've completed all your reviews for now.</p>
+            <a href="{% url 'dashboard' %}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700">
+                Back to Dashboard
+            </a>
+        </div>
+        
+        <div id="word-card" class="bg-white rounded-lg shadow-md p-8 hidden">
+            <div class="text-center mb-6">
+                <h2 id="word-text" class="text-4xl font-bold mb-4"></h2>
+                <p id="word-phonetic" class="text-gray-700 font-mono mb-2"></p>
+                <div class="mb-2">
+                    <button id="pronounce-btn" class="text-blue-600 hover:text-blue-800">🔊 Pronounce</button>
+                </div>
+                <p id="word-frequency" class="text-gray-600 mb-2"></p>
+                <p id="word-source" class="text-sm text-gray-500 mb-4"></p>
+                
+                <!-- Progress toward "known" status -->
+                <div id="progress-indicator" class="bg-blue-50 p-3 rounded-lg mb-4 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-blue-800">Progress to "Known"</span>
+                        <span id="progress-text" class="text-sm text-blue-700"></span>
+                    </div>
+                    <div class="w-full bg-blue-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="reviews-remaining" class="text-xs text-blue-600 mt-1"></p>
+                </div>
+                
+                <div id="word-definition" class="text-gray-700 mt-4 text-left max-h-40 overflow-y-auto"></div>
+            </div>
+            
+            <div class="flex justify-center space-x-4 mt-8">
+                <button id="dont-know-btn" class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium">
+                    Don't Know
+                </button>
+                <button id="skip-btn" class="px-6 py-3 bg-gray-400 text-white rounded-md hover:bg-gray-500 font-medium">
+                    Skip
+                </button>
+                <button id="know-btn" class="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium">
+                    I Know It
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+let currentWord = null;
+
+function loadNextWord() {
+    document.getElementById('loading-card').classList.remove('hidden');
+    document.getElementById('word-card').classList.add('hidden');
+    document.getElementById('no-words-card').classList.add('hidden');
+    
+    fetch('/api/next-word/')
+        .then(response => {
+            if (response.status === 204) {
+                // No more words
+                document.getElementById('loading-card').classList.add('hidden');
+                document.getElementById('no-words-card').classList.remove('hidden');
+                return null;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                currentWord = data;
+                displayWord(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading word:', error);
+            document.getElementById('loading-card').innerHTML = 
+                '<p class="text-red-600">Error loading word. Please refresh the page.</p>';
+        });
+}
+
+function displayWord(wordData) {
+    document.getElementById('word-text').textContent = wordData.word.text;
+    document.getElementById('word-phonetic').textContent = wordData.word.phonetic || '';
+    // Pronounce
+    const pronounceBtn = document.getElementById('pronounce-btn');
+    pronounceBtn.onclick = () => playPronunciation(wordData.word.text, wordData.word.audio_url || '');
+    document.getElementById('word-frequency').textContent = `Appeared ${wordData.priority} times`;
+    
+    // Show definition if available
+    const definitionEl = document.getElementById('word-definition');
+    if (wordData.word.definition) {
+        definitionEl.innerHTML = '<strong>Definition:</strong> ' + wordData.word.definition;
+        definitionEl.classList.remove('hidden');
+    } else {
+        definitionEl.classList.add('hidden');
+    }
+    
+    // Show progress toward "known" status (if available from previous review)
+    updateProgressIndicator(wordData);
+    
+    // TODO: Add source information when available in the API
+    document.getElementById('word-source').textContent = '';
+    
+    document.getElementById('loading-card').classList.add('hidden');
+    document.getElementById('word-card').classList.remove('hidden');
+}
+
+function updateProgressIndicator(data) {
+    const progressDiv = document.getElementById('progress-indicator');
+    const progressText = document.getElementById('progress-text');
+    const progressBar = document.getElementById('progress-bar');
+    const reviewsRemaining = document.getElementById('reviews-remaining');
+    
+    // Show progress if we have the data and word is in learning state
+    if (data.successful_reviews !== undefined && data.threshold !== undefined) {
+        const successful = data.successful_reviews || 0;
+        const threshold = data.threshold || 5;
+        const percentage = Math.min(100, (successful / threshold) * 100);
+        
+        progressText.textContent = `${successful}/${threshold}`;
+        progressBar.style.width = `${percentage}%`;
+        
+        const remaining = Math.max(0, threshold - successful);
+        if (remaining > 0) {
+            reviewsRemaining.textContent = `${remaining} more successful reviews needed`;
+        } else {
+            reviewsRemaining.textContent = 'Ready to be marked as known!';
+        }
+        
+        progressDiv.classList.remove('hidden');
+    } else {
+        progressDiv.classList.add('hidden');
+    }
+}
+
+function reviewWord(action) {
+    if (!currentWord) return;
+    
+    const wordId = currentWord.id;
+    document.getElementById('word-card').classList.add('opacity-50');
+    
+    fetch(`/api/review-word/${wordId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ action: action })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.next_word) {
+            // Add progress information to the next word data
+            if (data.progress) {
+                data.next_word.successful_reviews = data.progress.successful_reviews;
+                data.next_word.threshold = data.progress.threshold;
+            }
+            
+            currentWord = data.next_word;
+            displayWord(data.next_word);
+            document.getElementById('word-card').classList.remove('opacity-50');
+            
+            // Show progress feedback for the reviewed word
+            if (data.progress && action === 'know') {
+                showProgressFeedback(data.progress);
+            }
+        } else {
+            // No more words
+            document.getElementById('word-card').classList.add('hidden');
+            document.getElementById('no-words-card').classList.remove('hidden');
+        }
+    })
+    .catch(error => {
+        console.error('Error reviewing word:', error);
+        document.getElementById('word-card').classList.remove('opacity-50');
+    });
+}
+
+// Event listeners
+document.getElementById('know-btn').addEventListener('click', () => reviewWord('know'));
+document.getElementById('dont-know-btn').addEventListener('click', () => reviewWord('dont_know'));
+document.getElementById('skip-btn').addEventListener('click', () => loadNextWord());
+
+function showProgressFeedback(progress) {
+    // Create a temporary notification for progress feedback
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50 shadow-lg';
+    
+    if (progress.reviews_remaining <= 0) {
+        notification.innerHTML = `
+            <strong>Excellent!</strong><br>
+            Word is now marked as "Known" 🎉
+        `;
+        notification.className = notification.className.replace('green', 'blue');
+    } else {
+        notification.innerHTML = `
+            <strong>Progress:</strong> ${progress.successful_reviews}/${progress.threshold} successful reviews<br>
+            <small>${progress.reviews_remaining} more needed to mark as known</small>
+        `;
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Load first word on page load
+loadNextWord();
+
+// Pronunciation helpers
+function playPronunciation(wordText, audioUrl) {
+    if (audioUrl) {
+        const audio = new Audio(audioUrl);
+        audio.play().catch(() => speak(wordText));
+    } else {
+        speak(wordText);
+    }
+}
+function speak(text) {
+    if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        window.speechSynthesis.speak(utter);
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ source.title }} | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <a href="{% url 'dashboard' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+            ← Back to Dashboard
+        </a>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ source.title }}</h1>
+                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <span>📅 Added on {{ source.created_at|date:"F j, Y" }}</span>
+                    <span>📄 {{ source.get_source_type_display }}</span>
+                    <span>📊 {{ total_words }} unique words</span>
+                </div>
+            </div>
+            
+            <div class="mt-4 sm:mt-0 flex gap-3">
+                {% if source_words_to_review > 0 %}
+                <a href="{% url 'review_page' %}" 
+                   class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-flex items-center">
+                    🎯 Review Words from This Source
+                    <span class="ml-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs">{{ source_words_to_review }}</span>
+                </a>
+                {% endif %}
+                
+                <button class="delete-source-btn bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors inline-flex items-center"
+                        data-source-id="{{ source.id }}"
+                        data-source-title="{{ source.title }}"
+                        title="Delete this source">
+                    🗑️ Delete Source
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Source Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-blue-600">{{ comprehension_percentage }}%</div>
+                <div class="text-sm text-gray-600 mt-1">Comprehension</div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-green-600">{{ known_words }}</div>
+                <div class="text-sm text-gray-600 mt-1">Known Words</div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-yellow-600">{{ learning_words }}</div>
+                <div class="text-sm text-gray-600 mt-1">Learning</div>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-gray-600">{{ new_words }}</div>
+                <div class="text-sm text-gray-600 mt-1">New Words</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Original Source Content -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-900">Original Content</h2>
+                <button id="toggle-content" class="text-blue-600 hover:text-blue-800 font-medium">
+                    <span id="toggle-text">Show Content</span>
+                    <span id="toggle-icon">▼</span>
+                </button>
+            </div>
+        </div>
+        <div id="content-section" class="hidden p-6">
+            <div class="bg-gray-50 p-4 rounded-lg max-h-96 overflow-auto">
+                <pre class="whitespace-pre-wrap text-sm text-gray-700 font-mono">{{ source.content }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Words Table -->
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Extracted Words</h2>
+            
+            <!-- Filters and Search -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <div class="flex-1">
+                    <input type="text" id="search-input" placeholder="Search words..." 
+                           value="{{ current_search }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                
+                <div class="flex gap-2">
+                    <select id="status-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Words</option>
+                        <option value="known" {% if current_status == 'known' %}selected{% endif %}>Known</option>
+                        <option value="unknown" {% if current_status == 'unknown' %}selected{% endif %}>Unknown</option>
+                        <option value="learning" {% if current_status == 'learning' %}selected{% endif %}>Learning</option>
+                        <option value="new" {% if current_status == 'new' %}selected{% endif %}>New</option>
+                    </select>
+                    
+                    <select id="sort-select" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="frequency-desc" {% if current_sort == 'frequency' and current_order == 'desc' %}selected{% endif %}>Frequency ↓</option>
+                        <option value="frequency-asc" {% if current_sort == 'frequency' and current_order == 'asc' %}selected{% endif %}>Frequency ↑</option>
+                        <option value="word-asc" {% if current_sort == 'word' and current_order == 'asc' %}selected{% endif %}>Word A-Z</option>
+                        <option value="word-desc" {% if current_sort == 'word' and current_order == 'desc' %}selected{% endif %}>Word Z-A</option>
+                        <option value="status-asc" {% if current_sort == 'status' and current_order == 'asc' %}selected{% endif %}>Status ↑</option>
+                        <option value="status-desc" {% if current_sort == 'status' and current_order == 'desc' %}selected{% endif %}>Status ↓</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="text-sm text-gray-600 mb-4">
+                Showing {{ filtered_word_count }} of {{ total_words }} words
+            </div>
+        </div>
+
+        <!-- Words Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Word</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Definition</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pronunciation</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for word in words_data %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-lg font-medium text-gray-900 font-mono">{{ word.text }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-600">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ word.frequency }}x
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if word.status == 'KNOWN' or word.status == 'IGNORED' %}
+                                    bg-green-100 text-green-800
+                                {% elif word.status == 'LEARNING' %}
+                                    bg-yellow-100 text-yellow-800
+                                {% elif word.status == 'NEW' %}
+                                    bg-gray-100 text-gray-800
+                                {% else %}
+                                    bg-gray-100 text-gray-800
+                                {% endif %}">
+                                {{ word.status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-600 max-w-xs truncate" title="{{ word.definition }}">
+                                {{ word.definition|default:"No definition available" }}
+                                {% if word.example_sentence %}
+                                <div class="text-xs text-gray-500 mt-1" title="Example">
+                                    “{{ word.example_sentence }}”
+                                </div>
+                                {% endif %}
+                                {% if word.synonyms %}
+                                <div class="text-xs text-gray-500 mt-1">
+                                    <span class="font-medium">Synonyms:</span> {{ word.synonyms|join:', ' }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-600">
+                                {% if word.phonetic %}
+                                    <span class="font-mono">{{ word.phonetic }}</span>
+                                {% endif %}
+                                <button class="ml-2 text-blue-600 hover:text-blue-800" onclick="playPronunciation('{{ word.text|escapejs }}','{{ word.audio_url|default:''|escapejs }}')">🔊</button>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            {% if not word.is_known %}
+                            <button onclick="markAsKnown({{ word.word_id }}, '{{ word.text }}')" 
+                                    class="text-green-600 hover:text-green-800 font-medium">
+                                Mark as Known
+                            </button>
+                            {% else %}
+                            <span class="text-gray-400">Already Known</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <div class="text-4xl mb-4">🔍</div>
+                                <div class="text-lg font-medium mb-2">No words found</div>
+                                <div class="text-sm">Try adjusting your search or filter criteria</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle content visibility
+document.getElementById('toggle-content').addEventListener('click', function() {
+    const contentSection = document.getElementById('content-section');
+    const toggleText = document.getElementById('toggle-text');
+    const toggleIcon = document.getElementById('toggle-icon');
+    
+    if (contentSection.classList.contains('hidden')) {
+        contentSection.classList.remove('hidden');
+        toggleText.textContent = 'Hide Content';
+        toggleIcon.textContent = '▲';
+    } else {
+        contentSection.classList.add('hidden');
+        toggleText.textContent = 'Show Content';
+        toggleIcon.textContent = '▼';
+    }
+});
+
+// Apply filters and sorting
+function applyFilters() {
+    const params = new URLSearchParams();
+    
+    const search = document.getElementById('search-input').value;
+    if (search) params.set('search', search);
+    
+    const status = document.getElementById('status-filter').value;
+    if (status !== 'all') params.set('status', status);
+    
+    const sortValue = document.getElementById('sort-select').value;
+    const [sort, order] = sortValue.split('-');
+    params.set('sort', sort);
+    params.set('order', order);
+    
+    window.location.search = params.toString();
+}
+
+// Event listeners for filters
+document.getElementById('search-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        applyFilters();
+    }
+});
+
+document.getElementById('status-filter').addEventListener('change', applyFilters);
+document.getElementById('sort-select').addEventListener('change', applyFilters);
+
+// Mark word as known functionality
+function markAsKnown(wordId, wordText) {
+    if (!confirm(`Mark "${wordText}" as known?`)) return;
+    
+    fetch('{% url "mark-word-known" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            word_id: wordId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            location.reload(); // Refresh to show updated status
+        } else {
+            alert('Error marking word as known');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error marking word as known');
+    });
+}
+
+// CSRF token helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Delete source functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteBtn = document.querySelector('.delete-source-btn');
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            const sourceId = this.dataset.sourceId;
+            const sourceTitle = this.dataset.sourceTitle;
+            
+            if (confirm(`Are you sure you want to delete "${sourceTitle}"?\n\nThis will safely remove the source. Known words will be preserved, only unlearned orphaned words will be removed.`)) {
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '⏳ Deleting...';
+                
+                fetch(`/api/delete-source/${sourceId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        alert(`Source deleted successfully!\n\n${data.statistics.words_deleted} unlearned words removed.\n${data.statistics.words_preserved} known words preserved.`);
+                        window.location.href = '/'; // Redirect to dashboard
+                    } else {
+                        alert('Error deleting source: ' + data.message);
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '🗑️ Delete Source';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting source. Please try again.');
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = '🗑️ Delete Source';
+                });
+            }
+        });
+    }
+});
+
+// Play pronunciation using audio URL if present; fallback to Web Speech API
+function playPronunciation(wordText, audioUrl) {
+    if (audioUrl) {
+        const audio = new Audio(audioUrl);
+        audio.play().catch(() => speak(wordText));
+    } else {
+        speak(wordText);
+    }
+}
+
+function speak(text) {
+    if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        window.speechSynthesis.speak(utter);
+    } else {
+        alert('Text-to-speech is not supported in this browser.');
+    }
+}
+</script>
+{% endblock %} 

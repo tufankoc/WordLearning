@@ -1,0 +1,699 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | {{ block.super }}{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Left Column: Stats and Sources -->
+    <div class="lg:col-span-2 space-y-8">
+        <!-- Learning Statistics -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-6">Your Learning Progress</h2>
+            
+            <!-- Daily Progress -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-lg font-medium">Today's Progress</span>
+                    <span class="text-lg">{{ new_words_today }} / {{ daily_target }} new words</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" 
+                         style="width: {% widthratio new_words_today daily_target 100 %}%"></div>
+                </div>
+            </div>
+            
+            <!-- Overall Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-50 p-4 rounded-lg text-center">
+                    <p class="text-3xl font-bold text-blue-600">{{ total_words }}</p>
+                    <p class="text-sm text-gray-600">Total Words</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg text-center">
+                    <p class="text-3xl font-bold text-green-600">{{ known_words }}</p>
+                    <p class="text-sm text-gray-600">Known Words</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg text-center">
+                    <p class="text-3xl font-bold text-purple-600">{{ sources_count }}</p>
+                    <p class="text-sm text-gray-600">Sources</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg text-center">
+                    <p class="text-3xl font-bold text-orange-600">
+                        {% if total_words > 0 %}
+                            {% widthratio known_words total_words 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </p>
+                    <p class="text-sm text-gray-600">Mastery</p>
+                </div>
+            </div>
+            
+            <!-- Review Button -->
+            <div class="mt-6 text-center">
+                <a href="{% url 'review_page' %}" class="inline-block bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
+                    Start Review Session
+                </a>
+            </div>
+        </div>
+
+        <!-- My Sources -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-4">My Sources</h2>
+            <div id="source-list" class="space-y-3">
+                {% if sources %}
+                    {% for item in sources %}
+                        <div class="p-4 bg-slate-50 rounded-md border border-slate-200 transition-colors hover:bg-slate-100">
+                            <div class="flex justify-between items-start">
+                                <a href="{% url 'source_detail' item.source.id %}" class="flex-1 block">
+                                    <h3 class="font-bold text-lg text-slate-800 hover:text-blue-600 transition-colors">{{ item.source.title }}</h3>
+                                    <p class="text-sm text-slate-500">{{ item.source.get_source_type_display }} - Added on {{ item.source.created_at|date:"M d, Y" }}</p>
+                                </a>
+                                <div class="ml-4 flex items-center space-x-3">
+                                    <div class="text-right">
+                                        <span class="text-2xl font-bold {% if item.coverage >= 80 %}text-green-600{% elif item.coverage >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                            {{ item.coverage }}%
+                                        </span>
+                                        <p class="text-xs text-gray-500">coverage</p>
+                                    </div>
+                                    <button class="delete-source-btn text-red-600 hover:text-red-800 p-2 rounded-md hover:bg-red-50 transition-colors"
+                                            data-source-id="{{ item.source.id }}"
+                                            data-source-title="{{ item.source.title }}"
+                                            title="Delete source">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-slate-500">You haven't added any sources yet. Add one to get started!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Enhanced Add Source & Quick Actions -->
+    <div class="lg:col-span-1 space-y-8">
+        <!-- Enhanced Add Source Widget -->
+        <div class="bg-white rounded-lg shadow-md h-fit">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Add New Source</h2>
+                    {% if not is_pro %}
+                        <div class="text-sm">
+                            <span class="text-gray-600">{{ sources_count }}/{{ sources_limit }}</span>
+                            {% if not can_add_source %}
+                                <a href="{% url 'upgrade_page' %}" class="ml-2 text-blue-600 hover:text-blue-800 font-medium">Upgrade</a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ✓ Pro
+                        </span>
+                    {% endif %}
+                </div>
+                
+                {% if not can_add_source %}
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4">
+                        <div class="text-sm text-orange-800">
+                            <strong>Limit Reached:</strong> Upgrade to Pro for unlimited sources.
+                            <a href="{% url 'upgrade_page' %}" class="font-medium underline hover:text-orange-900">Upgrade →</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="p-6"{% if not can_add_source %} style="opacity: 0.5; pointer-events: none;"{% endif %}>
+                <!-- Source Type Tabs -->
+                <div class="flex flex-wrap gap-1 mb-4">
+                    <button class="source-tab-btn text-xs px-3 py-1.5 rounded-full bg-blue-600 text-white" data-tab="text">
+                        📝 Text
+                    </button>
+                    <button class="source-tab-btn text-xs px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300" data-tab="url">
+                        🌐 Web
+                    </button>
+                    <button class="source-tab-btn text-xs px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300" data-tab="youtube">
+                        📺 YouTube
+                    </button>
+                    <button class="source-tab-btn text-xs px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300" data-tab="pdf">
+                        📄 PDF
+                    </button>
+                    <button class="source-tab-btn text-xs px-3 py-1.5 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300" data-tab="srt">
+                        🎬 SRT
+                    </button>
+                </div>
+
+                <!-- Enhanced Source Form -->
+                <form id="enhanced-source-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Title (always visible) -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input type="text" name="title" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter a descriptive title">
+                    </div>
+                    
+                    <!-- Manual Text Tab -->
+                    <div class="source-tab-content" data-tab="text">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Text Content</label>
+                            <textarea name="manual_text" rows="6"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder="Paste your text content here... (minimum 10 characters)"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Web URL Tab -->
+                    <div class="source-tab-content hidden" data-tab="url">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+                            <input type="url" name="web_url"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="https://example.com/article">
+                            <p class="text-xs text-gray-500 mt-1">We'll extract clean text from the webpage</p>
+                        </div>
+                    </div>
+                    
+                    <!-- YouTube Tab -->
+                    <div class="source-tab-content hidden" data-tab="youtube">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">YouTube URL</label>
+                            <input type="url" name="youtube_url"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="https://www.youtube.com/watch?v=...">
+                            <p class="text-xs text-gray-500 mt-1">Video must have available transcripts/subtitles</p>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF Upload Tab -->
+                    <div class="source-tab-content hidden" data-tab="pdf">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">PDF File</label>
+                            <div class="relative">
+                                <input type="file" name="pdf_file" accept=".pdf"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Maximum file size: 10MB</p>
+                        </div>
+                    </div>
+                    
+                    <!-- SRT Upload Tab -->
+                    <div class="source-tab-content hidden" data-tab="srt">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">SRT Subtitle File</label>
+                            <div class="relative">
+                                <input type="file" name="srt_file" accept=".srt"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Subtitle files (.srt format)</p>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <span class="submit-text">🚀 Process Source</span>
+                        <span class="loading-text hidden">⏳ Processing...</span>
+                    </button>
+                </form>
+
+                <!-- Analysis Results -->
+                <div id="enhanced-analysis-results" class="mt-4 hidden">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-800 mb-2" id="success-message"></h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-center bg-white rounded p-2">
+                                <div class="text-lg font-bold text-blue-600" id="total-words">0</div>
+                                <div class="text-xs text-gray-600">Total Words</div>
+                            </div>
+                            <div class="text-center bg-white rounded p-2">
+                                <div class="text-lg font-bold text-green-600" id="new-words">0</div>
+                                <div class="text-xs text-gray-600">New Words</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Coverage</span>
+                                <span id="coverage-percent">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-600 h-2 rounded-full transition-all duration-500" id="coverage-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <a href="#" id="view-details-link" class="mt-3 inline-block text-sm bg-green-600 text-white py-1 px-3 rounded hover:bg-green-700">
+                            View Details →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="bg-white p-6 rounded-lg shadow-md h-fit">
+            <h2 class="text-2xl font-bold mb-4">Quick Actions</h2>
+            <div class="space-y-3">
+                <a href="{% url 'review_page' %}" class="block w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 text-center">
+                    Review Words
+                </a>
+                <button id="mark-known-toggle" class="w-full bg-slate-600 text-white font-bold py-2 px-4 rounded-md hover:bg-slate-700">
+                    Mark Word as Known
+                </button>
+                <button id="practice-pronunciation" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700">
+                    Practice Pronunciation
+                </button>
+            </div>
+            
+            <form id="mark-known-form" method="post" action="{% url 'mark-word-known' %}" class="mt-4 hidden">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="id_word_text" class="block text-sm font-medium text-gray-700">Word</label>
+                    <input type="text" name="word" id="id_word_text" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
+                </div>
+                <button type="submit" class="w-full bg-slate-600 text-white font-bold py-2 px-4 rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
+                    Mark as Known
+                </button>
+            </form>
+            <div id="mark-known-feedback" class="mt-4 text-sm text-green-700"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 text-center max-w-sm mx-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Processing Content</h3>
+        <p class="text-sm text-gray-600" id="loading-message">Extracting text and analyzing vocabulary...</p>
+        <div class="mt-4 text-xs text-gray-400">This may take a few seconds</div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-40">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Delete Source</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500" id="deleteModalText">
+                    Are you sure you want to delete this source?
+                </p>
+                <div class="mt-3 text-xs text-gray-400 bg-gray-50 p-3 rounded">
+                    <strong>Safe deletion:</strong> Known words will be preserved, only unlearned orphaned words will be removed.
+                </div>
+            </div>
+            <div class="flex items-center px-4 py-3 space-x-2">
+                <button id="cancelDelete" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Cancel
+                </button>
+                <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+{% endblock %}
+
+{% block javascript %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced Source Form and Tab Management
+    const enhancedForm = document.getElementById('enhanced-source-form');
+    const resultsDiv = document.getElementById('enhanced-analysis-results');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingMessage = document.getElementById('loading-message');
+    const submitButton = enhancedForm.querySelector('button[type="submit"]');
+    const submitText = submitButton.querySelector('.submit-text');
+    const loadingText = submitButton.querySelector('.loading-text');
+
+    // Tab switching functionality
+    const tabButtons = document.querySelectorAll('.source-tab-btn');
+    const tabContents = document.querySelectorAll('.source-tab-content');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Update button styles
+            tabButtons.forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            this.classList.remove('bg-gray-200', 'text-gray-700');
+            this.classList.add('bg-blue-600', 'text-white');
+            
+            // Show/hide tab content
+            tabContents.forEach(content => {
+                if (content.dataset.tab === targetTab) {
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+            });
+            
+            // Clear previous values when switching tabs
+            enhancedForm.reset();
+            const titleInput = enhancedForm.querySelector('input[name="title"]');
+            if (titleInput.value) {
+                // Keep title when switching tabs
+                const title = titleInput.value;
+                enhancedForm.reset();
+                titleInput.value = title;
+            }
+        });
+    });
+
+    // Enhanced form submission
+    enhancedForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(enhancedForm);
+        
+        // Determine which input type is active
+        const activeTab = document.querySelector('.source-tab-btn.bg-blue-600').dataset.tab;
+        const loadingMessages = {
+            text: 'Processing text content...',
+            url: 'Fetching and analyzing webpage...',
+            youtube: 'Extracting video transcript...',
+            pdf: 'Extracting text from PDF...',
+            srt: 'Processing subtitle file...'
+        };
+        
+        // Validate input based on active tab
+        let hasInput = false;
+        switch(activeTab) {
+            case 'text':
+                hasInput = formData.get('manual_text') && formData.get('manual_text').trim().length >= 10;
+                if (!hasInput) {
+                    showToast('Please enter at least 10 characters of text', 'error');
+                    return;
+                }
+                break;
+            case 'url':
+                hasInput = formData.get('web_url') && formData.get('web_url').trim();
+                if (!hasInput) {
+                    showToast('Please enter a valid website URL', 'error');
+                    return;
+                }
+                break;
+            case 'youtube':
+                hasInput = formData.get('youtube_url') && formData.get('youtube_url').trim();
+                if (!hasInput) {
+                    showToast('Please enter a valid YouTube URL', 'error');
+                    return;
+                }
+                break;
+            case 'pdf':
+                hasInput = formData.get('pdf_file') && formData.get('pdf_file').size > 0;
+                if (!hasInput) {
+                    showToast('Please select a PDF file to upload', 'error');
+                    return;
+                }
+                // Check file size (10MB limit)
+                if (formData.get('pdf_file').size > 10 * 1024 * 1024) {
+                    showToast('PDF file must be smaller than 10MB', 'error');
+                    return;
+                }
+                break;
+            case 'srt':
+                hasInput = formData.get('srt_file') && formData.get('srt_file').size > 0;
+                if (!hasInput) {
+                    showToast('Please select an SRT file to upload', 'error');
+                    return;
+                }
+                break;
+        }
+        
+        // Check title
+        if (!formData.get('title') || formData.get('title').trim().length < 2) {
+            showToast('Please enter a title (at least 2 characters)', 'error');
+            return;
+        }
+        
+        // Show loading state
+        loadingMessage.textContent = loadingMessages[activeTab];
+        loadingOverlay.classList.remove('hidden');
+        submitText.classList.add('hidden');
+        loadingText.classList.remove('hidden');
+        submitButton.disabled = true;
+        
+        // Hide any previous results
+        resultsDiv.classList.add('hidden');
+
+        // Submit to enhanced API
+        fetch('/api/sources/enhanced/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
+        .then(data => {
+            showEnhancedResults(data);
+            enhancedForm.reset();
+            
+            // Show success toast
+            showToast(data.success_message || 'Source processed successfully!', 'success');
+            
+            // Reload page after a delay to update source list
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            let errorMessage = 'An error occurred while processing your content.';
+            
+            if (error.error) {
+                errorMessage = error.error;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            showToast(errorMessage, 'error');
+        })
+        .finally(() => {
+            // Reset loading state
+            loadingOverlay.classList.add('hidden');
+            submitText.classList.remove('hidden');
+            loadingText.classList.add('hidden');
+            submitButton.disabled = false;
+        });
+    });
+
+    // Show enhanced results
+    function showEnhancedResults(data) {
+        const analysis = data.analysis;
+        
+        document.getElementById('success-message').textContent = data.success_message || 'Processing complete!';
+        document.getElementById('total-words').textContent = analysis.unique_words || 0;
+        document.getElementById('new-words').textContent = analysis.new_words || 0;
+        document.getElementById('coverage-percent').textContent = (analysis.coverage || 0) + '%';
+        document.getElementById('coverage-bar').style.width = (analysis.coverage || 0) + '%';
+        document.getElementById('view-details-link').href = `/source/${data.id}/words/`;
+        
+        resultsDiv.classList.remove('hidden');
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Delete source functionality (keeping existing code)
+    const modal = document.getElementById('deleteModal');
+    const modalText = document.getElementById('deleteModalText');
+    const confirmBtn = document.getElementById('confirmDelete');
+    const cancelBtn = document.getElementById('cancelDelete');
+    let currentSourceId = null;
+    
+    // Add click handlers to delete buttons
+    document.querySelectorAll('.delete-source-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            currentSourceId = this.dataset.sourceId;
+            const sourceTitle = this.dataset.sourceTitle;
+            
+            modalText.textContent = `Are you sure you want to delete "${sourceTitle}"?`;
+            modal.classList.remove('hidden');
+        });
+    });
+    
+    // Cancel deletion
+    cancelBtn.addEventListener('click', function() {
+        modal.classList.add('hidden');
+        currentSourceId = null;
+    });
+    
+    // Confirm deletion
+    confirmBtn.addEventListener('click', function() {
+        if (!currentSourceId) return;
+        
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Deleting...';
+        
+        fetch(`/api/delete-source/${currentSourceId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                // Show success message
+                showToast(`Source deleted! ${data.statistics.words_deleted} unlearned words removed. ${data.statistics.words_preserved} known words preserved.`, 'success');
+                
+                // Remove the source from the page
+                const sourceElement = document.querySelector(`[data-source-id="${currentSourceId}"]`).closest('.p-4');
+                sourceElement.remove();
+                
+                // Check if no sources left
+                const remainingSources = document.querySelectorAll('.delete-source-btn').length - 1;
+                if (remainingSources === 0) {
+                    location.reload(); // Reload to show "no sources" message
+                }
+            } else {
+                showToast('Error deleting source: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting source. Please try again.', 'error');
+        })
+        .finally(() => {
+            modal.classList.add('hidden');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Delete';
+            currentSourceId = null;
+        });
+    });
+    
+    // Close modal on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            currentSourceId = null;
+        }
+    });
+
+    // Toggle mark known form (keeping existing functionality)
+    const markKnownToggle = document.getElementById('mark-known-toggle');
+    const markKnownForm = document.getElementById('mark-known-form');
+    const markKnownFeedback = document.getElementById('mark-known-feedback');
+    
+    markKnownToggle.addEventListener('click', function() {
+        markKnownForm.classList.toggle('hidden');
+    });
+
+    // Mark Word as Known Logic
+    markKnownForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const wordInput = markKnownForm.querySelector('input[name="word"]');
+        const word = wordInput.value;
+        const csrfToken = markKnownForm.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+        fetch(markKnownForm.action, {
+            method: 'POST',
+            body: JSON.stringify({ word: word }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                markKnownFeedback.textContent = data.message;
+                wordInput.value = ''; // Clear input
+                setTimeout(() => { 
+                    markKnownFeedback.textContent = ''; 
+                    markKnownForm.classList.add('hidden');
+                }, 3000);
+            } else {
+                markKnownFeedback.textContent = 'Error: ' + data.error;
+            }
+        })
+        .catch(err => {
+            markKnownFeedback.textContent = 'An unexpected error occurred.';
+            console.error(err);
+        });
+    });
+    
+    // Simple pronunciation practice prompt
+    const practiceBtn = document.getElementById('practice-pronunciation');
+    practiceBtn.addEventListener('click', function() {
+        const word = prompt('Type an English word to hear its pronunciation:');
+        if (word) {
+            playPronunciation(word, '');
+        }
+    });
+});
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-md shadow-lg z-50 transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Fade in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 100);
+    
+    // Fade out and remove
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
+    }, 5000);
+}
+
+// Pronunciation helpers
+function playPronunciation(wordText, audioUrl) {
+    if (audioUrl) {
+        const audio = new Audio(audioUrl);
+        audio.play().catch(() => speak(wordText));
+    } else {
+        speak(wordText);
+    }
+}
+function speak(text) {
+    if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        window.speechSynthesis.speak(utter);
+    } else {
+        showToast('Text-to-speech not supported in this browser', 'error');
+    }
+}
+</script>
+{% endblock %} 

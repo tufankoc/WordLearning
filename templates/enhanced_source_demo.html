@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Source API Demo - Kelime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button.active { 
+            background-color: #3b82f6; 
+            color: white; 
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Enhanced Source API Demo</h1>
+            <p class="text-gray-600">Upload content from multiple sources to extract vocabulary</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex flex-wrap justify-center mb-6 border-b">
+            <button class="tab-button px-4 py-2 mx-1 mb-2 rounded-t-lg border-b-2 border-transparent hover:bg-gray-100 active" 
+                    onclick="showTab('manual')" id="manual-tab">
+                📝 Manual Text
+            </button>
+            <button class="tab-button px-4 py-2 mx-1 mb-2 rounded-t-lg border-b-2 border-transparent hover:bg-gray-100" 
+                    onclick="showTab('pdf')" id="pdf-tab">
+                📄 PDF Upload
+            </button>
+            <button class="tab-button px-4 py-2 mx-1 mb-2 rounded-t-lg border-b-2 border-transparent hover:bg-gray-100" 
+                    onclick="showTab('web')" id="web-tab">
+                🌐 Web URL
+            </button>
+            <button class="tab-button px-4 py-2 mx-1 mb-2 rounded-t-lg border-b-2 border-transparent hover:bg-gray-100" 
+                    onclick="showTab('youtube')" id="youtube-tab">
+                📺 YouTube
+            </button>
+            <button class="tab-button px-4 py-2 mx-1 mb-2 rounded-t-lg border-b-2 border-transparent hover:bg-gray-100" 
+                    onclick="showTab('srt')" id="srt-tab">
+                🎬 SRT Subtitles
+            </button>
+        </div>
+
+        <!-- Forms Container -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            
+            <!-- Manual Text Tab -->
+            <div id="manual-content" class="tab-content active">
+                <h3 class="text-xl font-semibold mb-4">📝 Manual Text Input</h3>
+                <form id="manual-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                        <input type="text" name="title" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="e.g., Academic Article Extract">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Text Content</label>
+                        <textarea name="manual_text" required rows="8"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Paste your text content here... (minimum 10 characters)"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                        🚀 Process Text
+                    </button>
+                </form>
+            </div>
+
+            <!-- PDF Upload Tab -->
+            <div id="pdf-content" class="tab-content">
+                <h3 class="text-xl font-semibold mb-4">📄 PDF File Upload</h3>
+                <form id="pdf-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                        <input type="text" name="title" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="e.g., Research Paper on Language Learning">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">PDF File (Max 10MB)</label>
+                        <input type="file" name="pdf_file" accept=".pdf" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-sm text-gray-500 mt-1">Only PDF files are accepted</p>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                        📄 Process PDF
+                    </button>
+                </form>
+            </div>
+
+            <!-- Web URL Tab -->
+            <div id="web-content" class="tab-content">
+                <h3 class="text-xl font-semibold mb-4">🌐 Website URL</h3>
+                <form id="web-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                        <input type="text" name="title" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="e.g., BBC News Article">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Website URL</label>
+                        <input type="url" name="web_url" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="https://example.com/article">
+                        <p class="text-sm text-gray-500 mt-1">Only HTTP/HTTPS URLs are allowed</p>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                        🌐 Scrape Website
+                    </button>
+                </form>
+            </div>
+
+            <!-- YouTube Tab -->
+            <div id="youtube-content" class="tab-content">
+                <h3 class="text-xl font-semibold mb-4">📺 YouTube Video</h3>
+                <form id="youtube-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                        <input type="text" name="title" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="e.g., TED Talk on Language Learning">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">YouTube URL</label>
+                        <input type="url" name="youtube_url" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="https://www.youtube.com/watch?v=...">
+                        <p class="text-sm text-gray-500 mt-1">Video must have available transcripts/subtitles</p>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                        📺 Extract Transcript
+                    </button>
+                </form>
+            </div>
+
+            <!-- SRT Upload Tab -->
+            <div id="srt-content" class="tab-content">
+                <h3 class="text-xl font-semibold mb-4">🎬 SRT Subtitle File</h3>
+                <form id="srt-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                        <input type="text" name="title" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="e.g., Movie Dialogue Subtitles">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">SRT File (Max 10MB)</label>
+                        <input type="file" name="srt_file" accept=".srt" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-sm text-gray-500 mt-1">Only .srt subtitle files are accepted</p>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                        🎬 Process Subtitles
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="mt-8 bg-white rounded-lg shadow-md p-6 hidden">
+            <h3 class="text-xl font-semibold mb-4">📊 Processing Results</h3>
+            <div id="results-content"></div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-lg p-6 text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-lg font-medium">Processing your content...</p>
+                <p class="text-sm text-gray-600">This may take a few seconds</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-content').classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // Form submission handlers
+        document.getElementById('manual-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, false);
+        });
+
+        document.getElementById('pdf-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, true);
+        });
+
+        document.getElementById('web-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, false);
+        });
+
+        document.getElementById('youtube-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, false);
+        });
+
+        document.getElementById('srt-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, true);
+        });
+
+        // CSRF token function
+        function getCSRFToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        }
+
+        // Generic form submission
+        function submitForm(form, hasFiles) {
+            const formData = new FormData(form);
+            showLoading(true);
+
+            const options = {
+                method: 'POST',
+                body: formData,
+                headers: {}
+            };
+
+            // Add CSRF token if available
+            const csrfToken = getCSRFToken();
+            if (csrfToken) {
+                options.headers['X-CSRFToken'] = csrfToken;
+            }
+
+            fetch('/api/sources/enhanced/', options)
+                .then(response => response.json())
+                .then(data => {
+                    showLoading(false);
+                    if (data.success_message) {
+                        showResults(data);
+                    } else {
+                        showError(data.error || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    showLoading(false);
+                    showError('Network error: ' + error.message);
+                });
+        }
+
+        // Show/hide loading overlay
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+        }
+
+        // Display results
+        function showResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const contentDiv = document.getElementById('results-content');
+            
+            const analysis = data.analysis;
+            
+            contentDiv.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-green-800 mb-2">${data.success_message}</h4>
+                        <p class="text-green-700">${data.content_preview}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 p-3 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-blue-600">${analysis.total_words}</div>
+                            <div class="text-sm text-blue-800">Total Words</div>
+                        </div>
+                        <div class="bg-purple-50 p-3 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-purple-600">${analysis.unique_words}</div>
+                            <div class="text-sm text-purple-800">Unique Words</div>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-green-600">${analysis.known_words}</div>
+                            <div class="text-sm text-green-800">Known Words</div>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-lg text-center">
+                            <div class="text-2xl font-bold text-red-600">${analysis.new_words}</div>
+                            <div class="text-sm text-red-800">New Words</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-semibold mb-2">📈 Vocabulary Coverage</h5>
+                        <div class="w-full bg-gray-200 rounded-full h-4">
+                            <div class="bg-blue-600 h-4 rounded-full transition-all duration-500" 
+                                 style="width: ${analysis.coverage}%"></div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">
+                            ${analysis.coverage}% of words are already known
+                        </p>
+                    </div>
+                    
+                    ${analysis.pages ? `
+                        <div class="bg-indigo-50 p-3 rounded-lg">
+                            <strong>📄 Pages processed:</strong> ${analysis.pages}
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.language ? `
+                        <div class="bg-yellow-50 p-3 rounded-lg">
+                            <strong>🌍 Language detected:</strong> ${analysis.language}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            resultsDiv.classList.remove('hidden');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Display error
+        function showError(message) {
+            const resultsDiv = document.getElementById('results');
+            const contentDiv = document.getElementById('results-content');
+            
+            contentDiv.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-800 mb-2">❌ Error</h4>
+                    <p class="text-red-700">${message}</p>
+                </div>
+            `;
+            
+            resultsDiv.classList.remove('hidden');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Add CSRF token to page if available
+        document.addEventListener('DOMContentLoaded', function() {
+            // Try to get CSRF token from cookies or meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (csrfToken) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'csrfmiddlewaretoken';
+                input.value = csrfToken;
+                document.body.appendChild(input);
+            }
+        });
+    </script>
+</body>
+</html> 

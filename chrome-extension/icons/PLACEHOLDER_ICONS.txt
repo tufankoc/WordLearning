@@ -1,0 +1,19 @@
+PLACEHOLDER FOR ICON FILES
+
+The following PNG files need to be created and placed in this directory:
+
+Required files:
+- icon16.png (16x16 pixels)
+- icon32.png (32x32 pixels)  
+- icon48.png (48x48 pixels)
+- icon128.png (128x128 pixels)
+
+Use the icon.svg file as a source and convert to PNG format.
+
+For testing purposes, you can:
+1. Create simple colored squares
+2. Use the emoji 📚 as a screenshot
+3. Download any small PNG and copy it 4 times with different names
+4. Use online SVG to PNG converters
+
+The extension will load without icons, but they improve the user experience. 

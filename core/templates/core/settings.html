@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings | {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Custom Toggle Switch Styles */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: #3b82f6;
+    }
+    
+    input:focus + .toggle-slider {
+        box-shadow: 0 0 1px #3b82f6;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+    
+    input:disabled + .toggle-slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    input:disabled + .toggle-slider:before {
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+    <!-- Admin Redirect Message -->
+    {% if show_admin_redirect_message %}
+    <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">
+                    Admin Erişimi Yok
+                </h3>
+                <div class="mt-1 text-sm text-yellow-700">
+                    <p>Admin paneline erişim yetkiniz bulunmuyor. Hesap ayarlarınızı buradan düzenleyebilirsiniz.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <h1 class="text-3xl font-bold mb-8">Settings</h1>
+
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Learning Settings -->
+        <div class="border-b border-gray-200 pb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900">Learning Settings</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_daily_target" class="block text-lg font-medium text-gray-700">Daily Learning Target</label>
+                    <p class="text-sm text-gray-500 mb-2">How many new words you want to learn each day.</p>
+                    <input type="number" name="daily_target" id="id_daily_target" 
+                           value="{{ current_target }}" min="1" max="100"
+                           class="mt-1 block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                
+                <div class="relative">
+                    <label for="id_daily_new_word_target" class="block text-lg font-medium text-gray-700">
+                        Daily New Word Target
+                        {% if not user_profile.can_modify_daily_new_word_target %}
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full ml-2">
+                            Pro Only
+                        </span>
+                        {% endif %}
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">Number of new words introduced per day. Learning/review words are shown separately.</p>
+                    
+                    <div class="relative">
+                        <input type="number" name="daily_new_word_target" id="id_daily_new_word_target" 
+                               value="{{ user_profile.daily_new_word_target }}" min="5" max="100"
+                               {% if not user_profile.can_modify_daily_new_word_target %}disabled{% endif %}
+                               class="mt-1 block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 {% if not user_profile.can_modify_daily_new_word_target %}bg-gray-50 text-gray-500 cursor-not-allowed{% endif %}">
+                        
+                        {% if not user_profile.can_modify_daily_new_word_target %}
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="bg-white bg-opacity-90 px-2 py-1 rounded text-xs text-orange-600 font-medium">
+                                <a href="/upgrade/" class="hover:text-orange-800 underline">Upgrade to Pro</a> to customize
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-xs text-gray-400 mt-1">
+                        {% if user_profile.can_modify_daily_new_word_target %}
+                            Effective target: {{ user_profile.get_effective_daily_new_word_target }} new words/day
+                        {% else %}
+                            Fixed at {{ user_profile.get_effective_daily_new_word_target }} for free users. <a href="/upgrade/" class="text-blue-600 hover:text-blue-800 underline">Upgrade to Pro</a> to customize (5-100 words).
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Stop Words Filtering -->
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="filter_stop_words" id="id_filter_stop_words" 
+                                   {% if user_profile.filter_stop_words %}checked{% endif %}
+                                   {% if not user_profile.can_modify_stop_words_filter %}disabled{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <label for="id_filter_stop_words" class="text-lg font-medium text-gray-900 cursor-pointer {% if not user_profile.can_modify_stop_words_filter %}cursor-not-allowed{% endif %}">
+                                Filter Common English Words
+                            </label>
+                            {% if not user_profile.can_modify_stop_words_filter %}
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                                Pro Only
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">
+                            Automatically deprioritize common words like "the", "and", "is" to focus on content-carrying vocabulary.
+                        </p>
+                        <div class="mt-2 text-xs text-gray-500">
+                            {% if user_profile.can_modify_stop_words_filter %}
+                                Status: 
+                                <span class="font-medium {% if user_profile.get_effective_stop_words_filter %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ user_profile.get_effective_stop_words_filter|yesno:"Enabled,Disabled" }}
+                                </span>
+                            {% else %}
+                                Free users always have filtering enabled. <a href="/upgrade/" class="text-blue-600 hover:text-blue-800 underline">Upgrade to Pro</a> to customize.
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Stop Words Examples -->
+                        <details class="mt-3">
+                            <summary class="text-xs text-blue-600 cursor-pointer hover:text-blue-800">
+                                View examples of filtered words
+                            </summary>
+                            <div class="mt-2 p-2 bg-white rounded border text-xs text-gray-600">
+                                <strong>Common stop words:</strong> the, a, an, and, or, but, in, on, at, to, for, of, with, by, is, are, was, were, be, have, has, had, do, does, did, will, would, can, could, should, may, might, this, that, these, those, I, you, he, she, it, we, they...
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                
+                {% if not user_profile.can_modify_stop_words_filter %}
+                <div class="mt-3 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
+                    <strong>Note:</strong> This setting is locked for free users and automatically enabled to provide the best learning experience.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- FSRS Settings -->
+        <div class="border-b border-gray-200 pb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-900">Spaced Repetition Settings</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_known_threshold" class="block text-lg font-medium text-gray-700">Known Word Threshold</label>
+                    <p class="text-sm text-gray-500 mb-2">Number of successful reviews before a word is marked as "known".</p>
+                    <input type="number" name="known_threshold" id="id_known_threshold" 
+                           value="{{ current_threshold }}" min="2" max="20"
+                           class="mt-1 block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <p class="text-xs text-gray-400 mt-1">Recommended: 3-7 reviews</p>
+                </div>
+
+                <div>
+                    <label for="id_retention_rate" class="block text-lg font-medium text-gray-700">Target Retention Rate</label>
+                    <p class="text-sm text-gray-500 mb-2">How well you want to remember words (higher = more frequent reviews).</p>
+                    <select name="retention_rate" id="id_retention_rate"
+                            class="mt-1 block w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="0.80" {% if current_retention == 0.80 %}selected{% endif %}>80% (Relaxed)</option>
+                        <option value="0.85" {% if current_retention == 0.85 %}selected{% endif %}>85% (Balanced)</option>
+                        <option value="0.90" {% if current_retention == 0.90 %}selected{% endif %}>90% (Standard)</option>
+                        <option value="0.95" {% if current_retention == 0.95 %}selected{% endif %}>95% (Intense)</option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">90% is recommended for most learners</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="bg-blue-50 p-6 rounded-lg">
+            <h3 class="text-lg font-semibold mb-3 text-blue-900">How the Spaced Repetition System Works</h3>
+            <div class="text-sm text-blue-800 space-y-2">
+                <p><strong>Known Word Threshold:</strong> After successfully reviewing a word this many times, it will be marked as "known" and removed from daily reviews.</p>
+                <p><strong>Target Retention Rate:</strong> Controls how often you see words. Higher percentages mean more frequent reviews but better retention.</p>
+                <p><strong>Progress Tracking:</strong> During reviews, you'll see "3/5 successful reviews" to track progress toward marking words as known.</p>
+            </div>
+        </div>
+
+        <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+            Save Settings
+        </button>
+    </form>
+</div>
+{% endblock %} 

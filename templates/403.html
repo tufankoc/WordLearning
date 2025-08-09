@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Denied | {{ block.super }}{% endblock %}
+
+{% block content %}
+<main class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 text-center">
+        <div>
+            <div class="mx-auto h-24 w-24 flex items-center justify-center rounded-full bg-red-100">
+                <svg class="h-12 w-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Access Denied
+            </h2>
+            <div class="mt-4 space-y-2">
+                <p class="text-sm text-gray-600">
+                    You don't have permission to access this administrative area.
+                </p>
+                {% if user.is_authenticated %}
+                    {% if not user.is_staff %}
+                        <p class="text-sm text-red-600">
+                            <strong>Reason:</strong> Staff privileges required
+                        </p>
+                    {% elif not user.is_superuser and '/superuser-admin/' in request.path %}
+                        <p class="text-sm text-red-600">
+                            <strong>Reason:</strong> Superuser privileges required
+                        </p>
+                    {% else %}
+                        <p class="text-sm text-red-600">
+                            <strong>Reason:</strong> Insufficient permissions
+                        </p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-2">
+                        Logged in as: <strong>{{ user.username }}</strong>
+                        {% if user.is_staff %}(Staff){% endif %}
+                        {% if user.is_superuser %}(Superuser){% endif %}
+                    </p>
+                {% else %}
+                    <p class="text-sm text-red-600">
+                        <strong>Reason:</strong> Authentication required
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="mt-8 space-y-4">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    Return to Dashboard
+                </a>
+                
+                {% if user.is_staff and not '/superuser-admin/' in request.path %}
+                    <a href="/admin/" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        Try Regular Admin
+                    </a>
+                {% endif %}
+                
+                <a href="/accounts/logout/" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    Logout
+                </a>
+            {% else %}
+                <a href="/accounts/login/?next={{ request.get_full_path|urlencode }}" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    Login to Continue
+                </a>
+                
+                <a href="{% url 'dashboard' %}" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    Return to Home
+                </a>
+            {% endif %}
+        </div>
+        
+        <div class="mt-6 text-xs text-gray-400">
+            <p>If you believe this is an error, please contact your administrator.</p>
+            <p class="mt-1">Request ID: {{ request.session.session_key|slice:":8" }}</p>
+        </div>
+    </div>
+</main>
+{% endblock %} 

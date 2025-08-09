@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Help | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
+    <h1 class="text-3xl font-bold mb-6">About & Help</h1>
+
+    <div class="prose max-w-none">
+        <p>Welcome to Kelime, your personal vocabulary learning assistant.</p>
+
+        <h2 class="mt-6">How It Works</h2>
+        <p>
+            This app is designed to help you build your vocabulary from the texts you read.
+            You can add any text source—an article, a book chapter, or just a snippet of text—and the app
+            will automatically extract the unique words for you to learn.
+        </p>
+
+        <h3 class="mt-4">Spaced Repetition</h3>
+        <p>
+            The review system uses a Spaced Repetition System (SRS). This is a learning technique that
+            schedules reviews at increasing intervals. When you know a word, the app will wait longer
+            before showing it to you again. If you forget a word, it will be shown to you more frequently
+            until you master it. This method is highly effective for long-term retention.
+        </p>
+
+        <h3 class="mt-4">Manually Adding Words</h3>
+        <p>
+            If you already know a word and don't want it to appear in your review queue, you can use the
+            "Mark a Word as Known" tool on the dashboard. Simply type the word and submit it.
+        </p>
+    </div>
+</div>
+{% endblock %} 

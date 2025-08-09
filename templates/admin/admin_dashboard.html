@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | {{ block.super }}{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p class="text-gray-600 mt-2">Internal analytics and user monitoring for Kelime vocabulary learning platform</p>
+        <div class="mt-4 flex space-x-4">
+            <a href="/admin/" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                Django Admin
+            </a>
+            <a href="{% url 'dashboard' %}" class="bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700">
+                User Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Users -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
+                        <dd class="text-lg font-medium text-gray-900">{{ total_users }}</dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="flex items-center text-sm text-gray-600">
+                    <span class="text-green-600 font-medium">{{ new_users_month }}</span>
+                    <span class="ml-1">new this month</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pro Users -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Pro Users</dt>
+                        <dd class="text-lg font-medium text-gray-900">{{ pro_users }}</dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="flex items-center text-sm text-gray-600">
+                    <span class="text-green-600 font-medium">{{ conversion_rate }}%</span>
+                    <span class="ml-1">conversion rate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Users -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center">
+                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Active (30d)</dt>
+                        <dd class="text-lg font-medium text-gray-900">{{ active_users_month }}</dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="flex items-center text-sm text-gray-600">
+                    <span class="text-red-600 font-medium">{{ churn_risk_users }}</span>
+                    <span class="ml-1">at churn risk</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Words Learned Today -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Words Learned Today</dt>
+                        <dd class="text-lg font-medium text-gray-900">{{ words_learned_today }}</dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="flex items-center text-sm text-gray-600">
+                    <span class="text-blue-600 font-medium">{{ total_words }}</span>
+                    <span class="ml-1">total in system</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Daily Active Users Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Daily Active Users (30 days)</h3>
+            <div class="h-64">
+                <canvas id="dailyActiveUsersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Daily Sources Chart -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Sources Added Per Day (30 days)</h3>
+            <div class="h-64">
+                <canvas id="dailySourcesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Engagement Table -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">User Engagement Breakdown</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Sources</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Words</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Known</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for breakdown in user_breakdown %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if breakdown.label == 'Pro' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ breakdown.label }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ breakdown.count }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ breakdown.avg_sources|floatformat:1 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ breakdown.avg_words|floatformat:1 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ breakdown.avg_known_words|floatformat:1 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top Active Users -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Most Active Users This Week</h3>
+            <div class="space-y-3">
+                {% for user in top_users_week %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span class="text-xs font-medium text-blue-600">{{ forloop.counter }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ user.username }}</p>
+                                <p class="text-xs text-gray-500">{{ user.email }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-900">{{ user.total_activity }} activities</p>
+                            <p class="text-xs text-gray-500">{{ user.recent_reviews }} reviews, {{ user.recent_sources }} sources</p>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-500 text-center py-4">No active users this week</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activities</h3>
+            <div class="space-y-3">
+                {% for activity in recent_activities %}
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="flex-shrink-0">
+                            {% if activity.type == 'new_user' %}
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                    </svg>
+                                </div>
+                            {% elif activity.type == 'pro_upgrade' %}
+                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                    </svg>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-900">
+                                <span class="font-medium">{{ activity.user }}</span>
+                                {{ activity.description }}
+                            </p>
+                            <p class="text-xs text-gray-500">{{ activity.date|timesince }} ago</p>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-500 text-center py-4">No recent activities</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Alerts -->
+    {% if users_at_limit > 0 or power_users > 0 %}
+        <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h3 class="text-lg font-medium text-yellow-800 mb-4">System Health Alerts</h3>
+            <div class="space-y-2">
+                {% if users_at_limit > 0 %}
+                    <div class="flex items-center text-yellow-700">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <span><strong>{{ users_at_limit }}</strong> free users have reached the 3-source limit</span>
+                    </div>
+                {% endif %}
+                {% if power_users > 0 %}
+                    <div class="flex items-center text-yellow-700">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span><strong>{{ power_users }}</strong> power users with 100+ words</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</main>
+{% endblock %}
+
+{% block javascript %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Chart.js configuration
+    const chartConfig = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
+            }
+        }
+    };
+
+    // Daily Active Users Chart
+    const dailyActiveUsersData = {{ daily_active_users_json|safe }};
+    const dauCtx = document.getElementById("dailyActiveUsersChart").getContext("2d");
+    new Chart(dauCtx, {
+        type: "line",
+        data: {
+            labels: dailyActiveUsersData.map(d => new Date(d.date).toLocaleDateString()),
+            datasets: [{
+                label: "Active Users",
+                data: dailyActiveUsersData.map(d => d.count),
+                borderColor: "rgb(59, 130, 246)",
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: chartConfig
+    });
+
+    // Daily Sources Chart
+    const dailySourcesData = {{ daily_sources_json|safe }};
+    const sourcesCtx = document.getElementById("dailySourcesChart").getContext("2d");
+    new Chart(sourcesCtx, {
+        type: "bar",
+        data: {
+            labels: dailySourcesData.map(d => new Date(d.date).toLocaleDateString()),
+            datasets: [{
+                label: "Sources Added",
+                data: dailySourcesData.map(d => d.count),
+                backgroundColor: "rgba(16, 185, 129, 0.8)",
+                borderColor: "rgb(16, 185, 129)",
+                borderWidth: 1
+            }]
+        },
+        options: chartConfig
+    });
+});
+</script>
+{% endblock %}

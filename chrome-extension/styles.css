@@ -1,0 +1,216 @@
+/* Kelime Chrome Extension Styles */
+
+/* Tooltip styles */
+.kelime-tooltip {
+    position: absolute;
+    z-index: 10000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    max-width: 320px;
+    animation: kelime-tooltip-enter 0.2s ease-out;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.kelime-tooltip-content {
+    padding: 12px 16px;
+}
+
+.kelime-tooltip-text {
+    margin-bottom: 12px;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.kelime-tooltip-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.kelime-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.kelime-btn-add {
+    background: rgba(255, 255, 255, 0.9);
+    color: #4f46e5;
+    flex: 1;
+}
+
+.kelime-btn-add:hover {
+    background: white;
+    transform: translateY(-1px);
+}
+
+.kelime-btn-close {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kelime-btn-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Notification styles */
+.kelime-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10001;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.kelime-notification-show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.kelime-notification-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.kelime-notification-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.kelime-notification-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.kelime-mode-notification {
+    top: 80px;
+}
+
+/* Selection mode styles */
+.kelime-selection-mode {
+    cursor: crosshair !important;
+}
+
+.kelime-selection-mode * {
+    cursor: crosshair !important;
+}
+
+/* Highlight styles for future features */
+.kelime-highlight {
+    background: linear-gradient(120deg, #fef08a 0%, #facc15 100%);
+    border-radius: 3px;
+    padding: 1px 2px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.kelime-highlight-known {
+    background: linear-gradient(120deg, #bbf7d0 0%, #10b981 100%);
+    color: white;
+}
+
+.kelime-highlight-learning {
+    background: linear-gradient(120deg, #fed7aa 0%, #f97316 100%);
+    color: white;
+}
+
+/* Animation keyframes */
+@keyframes kelime-tooltip-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .kelime-tooltip {
+        max-width: calc(100vw - 40px);
+        left: 20px !important;
+        right: 20px;
+    }
+    
+    .kelime-notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .kelime-tooltip {
+        background: #000;
+        border: 2px solid #fff;
+    }
+    
+    .kelime-btn-add {
+        background: #fff;
+        color: #000;
+        border: 1px solid #000;
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .kelime-tooltip {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    
+    .kelime-notification {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Accessibility improvements */
+.kelime-btn:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+}
+
+.kelime-tooltip:focus-within {
+    outline: none;
+}
+
+/* Print styles - hide extension elements */
+@media print {
+    .kelime-tooltip,
+    .kelime-notification,
+    .kelime-highlight {
+        display: none !important;
+    }
+} 

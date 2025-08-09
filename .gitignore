@@ -1,3 +1,47 @@
+<<<<<<< HEAD
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.python-version
+.pytest_cache/
+coverage*/
+
+# Environments
+.env
+.venv/
+venv/
+
+# Django
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+logs/
+*.log
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+
+# Editors / IDEs
+.vscode/
+.idea/
+
+# Misc
+cookies.txt
+*.local
+*.bak
+
+
+=======
 # Python
 __pycache__/
 *.py[cod]
@@ -59,3 +103,4 @@ staticfiles/
 /frontend/.env.development.local
 /frontend/.env.test.local
 /frontend/.env.production.local 
+>>>>>>> origin/main
